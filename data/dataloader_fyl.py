@@ -226,7 +226,7 @@ class Yolodataset(Dataset):
                 img,y=self.get_random_data_mosaic(lines[index,index+4],self.image_size[0:2])
             else:#不足四张图片
                 img,y=self.get_random_data(lines[index],self.image_size[0:2],random=self.random)
-            self.true_false=bool(1-self.true_false)#?????????????????????????????????????????????????????
+            self.true_false=bool(1-self.true_false)
         else:
             img,y=self.get_random_data(lines[index],self.image_size[0:2],random=self.random)
 

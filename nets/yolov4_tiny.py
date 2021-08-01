@@ -30,7 +30,7 @@ class Yolobody(nn.Module):
         if phi>=4:
             assert AssertionError("phi必须为(0、1、2、3)其中的某个值")
         self.phi=phi
-        self.net=darknet53_tiny(None)
+        self.backbone=darknet53_tiny(None)
         self.conv1=Basicconv(512,256,1)
         self.yolohead13=yolohead(256,512,num_anchors*(num_class+5))
         self.upsample=upsample(256,128)
@@ -44,7 +44,7 @@ class Yolobody(nn.Module):
 
     def forward(self,x):
         # feat1:[N,256,26,26],feat2:[N,512,13,13]
-        feat1,feat2=self.net(x)
+        feat1,feat2=self.backbone(x)
         if 1<=self.phi and self.phi<=3:
             feat1=self.attention256(feat1)
             feat2=self.attention512(feat2)
