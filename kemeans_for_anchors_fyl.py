@@ -81,7 +81,7 @@ if __name__ == '__main__':
     path=r"E:\666666\data\7-6\data.7.9"
     size=416
     anchors_num=6
-    xml_path=path+r"\VOC2021\Annotations"
+    xml_path=path+r"\VOC2007\Annotations"
     #取出所有xml中的所有框
     xml_w_h=load_data(xml_path)
 
@@ -101,12 +101,12 @@ if __name__ == '__main__':
         f.write(x_y)
     f.close()
 
-
+########################################################################################################################
     # print(np.random.randn()) #每次都不一样
     # np.random.seed(0)#加了这个，下面这行每次随机数都和第一次一样
     # print(np.random.rand())
 
-    a=np.arange(8).reshape(4,2)
+    # a=np.arange(8).reshape(4,2)
     # print(a)
     # print(a[:,1]*a[:,0])
     # print((a[:,1]*a[:,0]).shape)
@@ -123,4 +123,4 @@ if __name__ == '__main__':
     # print(a==b)
     # print((a==b).all())
     # print(a==1)
-    print(np.max(np.array([1,2,3,3,2,1])))
+    # print(np.max(np.array([1,2,3,3,2,1])))

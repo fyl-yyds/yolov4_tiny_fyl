@@ -4,10 +4,10 @@ import numpy as np
 import math
 
 class YOLOloss(nn.Module):
-    def __init__(self,anchores,num_classes,image_size,smooth_label,cuda,normalize):
+    def __init__(self,anchors,num_classes,image_size,smooth_label,cuda,normalize):
         super(YOLOloss, self).__init__()
-        self.anchors=anchores
-        self.num_anchors=len(anchores)
+        self.anchors=anchors
+        self.num_anchors=len(anchors)
         self.num_classes=num_classes
         self.total=5+num_classes
         self.img_size=image_size #(W,H)
@@ -39,7 +39,7 @@ class YOLOloss(nn.Module):
         #   此时获得的scaled_anchors大小是相对于特征层的
         # -------------------------------------------------#
         scaled_anchors=[(a_w/stride_w,a_h/stride_h) for a_w,a_h in self.anchors]
-        predicition=predict.reshape(N,int(self.anchors/2),self.total,
+        predicition=predict.reshape(N,int(self.num_anchors/2),self.total,
                     predict_h,predict_w).permute(0,1,3,4,2).contiguous()
         pre_conf=torch.sigmoid(predicition[...,4])
         pre_cls=torch.sigmoid(predicition[...,5:])
@@ -135,7 +135,7 @@ class YOLOloss(nn.Module):
             #-------------------------------------------------------#
             anchors_box=torch.FloatTensor(torch.cat((torch.zeros(self.num_anchors,2),
                                                 torch.FloatTensor(scaled_anchors)),dim=1))
-            anch_iou=targets_anchors_iou(gt_box,anchors_box)
+            anch_iou=targets_anchors_iou(gt_box,anchors_box)#[n,6]
             #-------------------------------------------------------#
             #   计算重合度最大的先验框是哪个
             #   num_true_box,
@@ -205,7 +205,7 @@ class YOLOloss(nn.Module):
         #   计算一共有多少张图片
         # -----------------------------------------------------#
         N=len(targets)
-        #[N,30,13,13]的特征层对应的是面积最大的三个先验框，[N,20,26,26]对应的是面积小的三个先验框，原作者没有使用第一个框，重复的使用了第四个框
+        #[N,30,13,13]的特征层对应的是面积最大的三个先验框，[N,30,26,26]对应的是面积小的三个先验框，原作者没有使用第一个框，重复的使用了第四个框
         anchors_index=[[3,4,5],[1,2,3]][self.feature_length.index(predict_w)]
         scaled_anchors=np.array(scaled_anchors)[anchors_index]
 
@@ -247,7 +247,7 @@ class YOLOloss(nn.Module):
                 gy=targets[i][:,1:2]*predict_h
                 gw=targets[i][:,2:3]*predict_w
                 gh=targets[i][:,3:4]*predict_h
-                gt_box=torch.FloatTensor(torch.cat([gx,gy,gw,gh],-1))#[n,4]
+                gt_box=torch.FloatTensor(torch.cat([gx,gy,gw,gh],-1)).type(FloatTensor)#[n,4]
                 anchors_iou=targets_anchors_iou(gt_box,pred_box_ignore)#[n,4];[3*169,4] ->[n,3*169]
                 # -------------------------------------------------------#
                 #   每个先验框对应真实框的最大重合度
@@ -337,7 +337,7 @@ def BCELoss(pred,target):
     pred = clip_by_tensor(pred, epsilon, 1.0 - epsilon)
     output = -target * torch.log(pred) - (1.0 - target) * torch.log(1.0 - pred)
     return output
-def clip_by_tensor(t,t_min,t_max):
+def clip_by_tensor(t,t_min,t_max):#将sigmoid之后的值限制在[t_min-7,t_max]之间
     t=t.float()
     result = (t >= t_min).float() * t + (t < t_min).float() * t_min
     result = (result <= t_max).float() * result + (result > t_max).float() * t_max
@@ -364,3 +364,4 @@ def smooth_labels(target_cls,smooth_label,num_classes):#target_cls[mask==1],self
 # print(torch.sum(a,axis=-1))
 # a=torch.tensor([[56,26, 56,87, 85,120],[1,2,3,4,5,6]])
 # print(a.index_select(0,torch.LongTensor([1])))
+# print([3,4,5].index(3))

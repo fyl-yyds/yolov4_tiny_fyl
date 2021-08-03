@@ -214,16 +214,16 @@ if __name__ == '__main__':
     # ------------------------------------------------------#
     mosaic = True
     Cosine_lr=True
-    smooth_label=0
+    smooth_label=0.005
 
     class_names=get_classes(classes_path)
     anchors=get_anchors(anchors_path)
-    num_anchors=len(anchors)
+    num_anchors=len(anchors[0])
     num_classes=len(class_names)
 
     model=Yolobody(num_anchors,num_classes,phi)
     weights_init(model)
-    model_path= "original_weight/yolov4_tiny_weights_voc_CBAM.pth"
+    model_path= "original_weight/yolov4_tiny_weights_voc_CBAM.pth" ##########################################################################################
     print("加载权重到state dict中...")
     device=torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_dict=model.state_dict()#模型的参数字典
@@ -244,7 +244,7 @@ if __name__ == '__main__':
                        (input_shape[1],input_shape[0]),smooth_label,cuda,normalize)
     loss_history=LossHistory("logs/")
 
-    annotation_path="data/2021/train2021.txt"
+    annotation_path= "data/2007/train2007.txt"
     #----------------------------------------------------------------------#
     #   验证集的划分在train_fyl.py代码里面进行
     #   2007_test.txt和2007_val.txt里面没有内容是正常的。训练不会使用到。
@@ -272,7 +272,7 @@ if __name__ == '__main__':
         lr=1e-3
         Batch_size=50
         Init_Epoch=0
-        Freeze_Epoch=100
+        Freeze_Epoch=50
         #----------------------------------------------------------------------------#
         #   我在实际测试时，发现optimizer的weight_decay起到了反作用，
         #   所以去除掉了weight_decay，大家也可以开起来试试，一般是weight_decay=5e-4
@@ -299,6 +299,45 @@ if __name__ == '__main__':
             param.requires_grad=False
         for epoch in range(Init_Epoch,Freeze_Epoch):
             fit_one_epoch(net,yolo_loss,epoch,epoch_size,epoch_size_val,gen,gen_val,Freeze_Epoch,cuda)
+            lr_scheduler.step()
+
+    if True:
+        lr = 1e-4
+        Batch_size = 30
+        Freeze_Epoch = 50
+        Unfreeze_Epoch = 700
+
+        # ----------------------------------------------------------------------------#
+        #   我在实际测试时，发现optimizer的weight_decay起到了反作用，
+        #   所以去除掉了weight_decay，大家也可以开起来试试，一般是weight_decay=5e-4
+        # ----------------------------------------------------------------------------#
+        optimizer = optim.Adam(net.parameters(), lr)
+        if Cosine_lr:
+            lr_scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=5, eta_min=1e-5)
+        else:
+            lr_scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.92)
+
+        train_dataset = Yolodataset(lines[:num_train], (input_shape[0], input_shape[1]), mosaic=mosaic, random=True)
+        val_dataset = Yolodataset(lines[num_train:], (input_shape[0], input_shape[1]), mosaic=False, random=False)
+        gen = DataLoader(train_dataset, shuffle=True, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                         drop_last=True, collate_fn=yolo_dataset_collate)
+        gen_val = DataLoader(val_dataset, shuffle=True, batch_size=Batch_size, num_workers=4, pin_memory=True,
+                             drop_last=True, collate_fn=yolo_dataset_collate)
+
+        epoch_size = num_train // Batch_size
+        epoch_size_val = num_val // Batch_size
+
+        if epoch_size == 0 or epoch_size_val == 0:
+            raise ValueError("数据集过小，无法进行训练，请扩充数据集。")
+        # ------------------------------------#
+        #   解冻后训练
+        # ------------------------------------#
+        for param in model.backbone.parameters():
+            param.requires_grad = True
+
+        for epoch in range(Freeze_Epoch, Unfreeze_Epoch):
+            fit_one_epoch(net, yolo_loss, epoch, epoch_size, epoch_size_val, gen, gen_val, Unfreeze_Epoch, cuda)
+            lr_scheduler.step()
 
 
 

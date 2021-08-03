@@ -39,7 +39,7 @@ class Yolodataset(Dataset):
             dy=(input_h-new_h)//2
 
             image=image.resize((new_w,new_h),Image.BICUBIC)
-            new_image=Image.new("RGB",(image_w,image_h),(128,128,128))
+            new_image=Image.new("RGB",(input_w,input_h),(128,128,128))
             new_image.paste(image,(dx,dy))
             image_array=np.array(new_image,np.float32)
 
@@ -223,7 +223,7 @@ class Yolodataset(Dataset):
         index=index%num
         if self.mosaic:
             if self.true_false and (index+4)<num:
-                img,y=self.get_random_data_mosaic(lines[index,index+4],self.image_size[0:2])
+                img,y=self.get_random_data_mosaic(lines[index:index+4],self.image_size[0:2])
             else:#不足四张图片
                 img,y=self.get_random_data(lines[index],self.image_size[0:2],random=self.random)
             self.true_false=bool(1-self.true_false)

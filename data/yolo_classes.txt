@@ -1,5 +1,4 @@
 face
 eye
 mouth
-left hand
-right hand
+hand

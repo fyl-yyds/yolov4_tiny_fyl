@@ -46,9 +46,9 @@ class CSPdarknet(nn.Module):
         super(CSPdarknet, self).__init__()
         self.conv1=Basicconv(3,32,3,2)
         self.conv2=Basicconv(32,64,3,2)
-        self.resblock1=resblock_body(64,64)
-        self.resblock2=resblock_body(128,128)
-        self.resblock3=resblock_body(256,256)
+        self.resblock_body1=resblock_body(64,64)
+        self.resblock_body2=resblock_body(128,128)
+        self.resblock_body3=resblock_body(256,256)
         self.conv3=Basicconv(512,512,3)
 
         #权重初始化，使其符合正态分布规律
@@ -63,10 +63,10 @@ class CSPdarknet(nn.Module):
     def forward(self,x):
         x=self.conv1(x)
         x=self.conv2(x)
-        x,_=self.resblock1(x)
-        x,_=self.resblock2(x)
+        x,_=self.resblock_body1(x)
+        x,_=self.resblock_body2(x)
 
-        x,feat1=self.resblock3(x)
+        x,feat1=self.resblock_body3(x)
 
         x=self.conv3(x)
         feat2=x
@@ -82,9 +82,9 @@ def darknet53_tiny(pretained):
 
 
 if __name__ == '__main__':
-    a=torch.arange(64,dtype=torch.float).reshape(1,4,4,4)
-    re=resblock_body(4,4)
-    print(re(a)[0].shape,re(a)[1].shape)
+    # a=torch.arange(64,dtype=torch.float).reshape(1,4,4,4)
+    # re=resblock_body(4,4)
+    # print(re(a)[0].shape,re(a)[1].shape)
     b=torch.ones([1,3,416,416])*3
     asd=CSPdarknet()
     print(asd(b)[0].shape)

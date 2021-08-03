@@ -21,17 +21,15 @@ class se_block(nn.Module):
 class chaeenlsattention(nn.Module):
     def __init__(self,in_channels,ratio=8):
         super(chaeenlsattention, self).__init__()
-        self.avgpool=nn.AdaptiveAvgPool2d(1)
-        self.maxpool=nn.AdaptiveMaxPool2d(1)
-        self.fc=nn.Sequential(
-            nn.Conv2d(in_channels,in_channels//ratio,1,1,bias=False),
-            nn.ReLU(),
-            nn.Conv2d(in_channels//ratio,in_channels,1,1,bias=False)
-        )
-        self.sigmoid=nn.Sigmoid()
+        self.avg_pool=nn.AdaptiveAvgPool2d(1)
+        self.max_pool=nn.AdaptiveMaxPool2d(1)
+        self.fc1   = nn.Conv2d(in_channels, in_channels // ratio, 1, bias=False)
+        self.relu1 = nn.ReLU()
+        self.fc2   = nn.Conv2d(in_channels // ratio, in_channels, 1, bias=False)
+        self.sigmoid = nn.Sigmoid()
     def forward(self,x):
-        avg_out=self.fc(self.avgpool(x))
-        max_out=self.fc(self.maxpool(x))
+        avg_out = self.fc2(self.relu1(self.fc1(self.avg_pool(x))))
+        max_out = self.fc2(self.relu1(self.fc1(self.max_pool(x))))
         return self.sigmoid(avg_out+max_out)
 
 class spatialattention(nn.Module):#(空间注意力)
@@ -39,24 +37,24 @@ class spatialattention(nn.Module):#(空间注意力)
         super(spatialattention, self).__init__()
         assert kernel_size in (7,3),"卷积核必须是7或者3"
         padding = 3 if kernel_size ==7 else 1
-        self.conv=nn.Conv2d(2,1,kernel_size,(1,1),padding=padding,bias=False)
+        self.conv1=nn.Conv2d(2,1,kernel_size,(1,1),padding=padding,bias=False)
         self.sigmoid=nn.Sigmoid()
     def forward(self,x):
         avg=torch.mean(x,dim=1,keepdim=True)   #在通道维度上取一个均值
         max,_=torch.max(x,dim=1,keepdim=True)  #在通道维度上取一个最大值
         x=torch.cat((avg,max),dim=1)
-        x=self.conv(x)
+        x=self.conv1(x)
         x=self.sigmoid(x)
         return x
 
 class cbam_block(nn.Module):
     def __init__(self,in_channels,ratio=8,kernel_size=7):
         super(cbam_block, self).__init__()
-        self.channel_attention=chaeenlsattention(in_channels,ratio=ratio)
-        self.spatial_attention=spatialattention(kernel_size=kernel_size)
+        self.channelattention=chaeenlsattention(in_channels,ratio=ratio)
+        self.spatialattention=spatialattention(kernel_size=kernel_size)
     def forward(self,x):
-        x=x*self.channel_attention(x)
-        x=x*self.spatial_attention(x)
+        x=x*self.channelattention(x)
+        x=x*self.spatialattention(x)
         return x
 
 class eca_block(nn.Module):

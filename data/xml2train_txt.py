@@ -2,7 +2,7 @@ import os
 import random
 
 random.seed(0) #保证每次的随机数相同
-xml_path=r"E:\666666\data\7-6\data.7.9\VOC2021\Annotations"
+xml_path=r"E:\666666\data\7-6\data.7.9\VOC2007\Annotations"
 
 train_val_persent=1
 train_persent=0.9
