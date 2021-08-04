@@ -8,6 +8,7 @@ from matplotlib import pyplot as plt
 import scipy.signal
 import torch.optim as optim
 from data.dataloader_fyl import Yolodataset,yolo_dataset_collate
+# from data.dataloader import YoloDataset,yolo_dataset_collate
 from torch.utils.data import DataLoader
 from tqdm import tqdm
 from torch.utils.tensorboard import SummaryWriter
@@ -202,7 +203,7 @@ if __name__ == '__main__':
     #   显存比较小可以使用416x416
     #   显存比较大可以使用608x608
     #-------------------------------#
-    input_shape=(416,416)   #(W,H)
+    input_shape=(224,224)   #(H,W)
     anchors_path="data/yolo_anchors.txt"
     classes_path="data/yolo_classes.txt"
     # ------------------------------------------------------#
@@ -270,7 +271,7 @@ if __name__ == '__main__':
     #------------------------------------------------------#
     if True:
         lr=1e-3
-        Batch_size=50
+        Batch_size=100
         Init_Epoch=0
         Freeze_Epoch=50
         #----------------------------------------------------------------------------#

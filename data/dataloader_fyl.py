@@ -1,4 +1,3 @@
-import torch
 from torch.utils.data.dataset import Dataset
 import numpy as np
 from PIL import Image
@@ -22,109 +21,218 @@ class Yolodataset(Dataset):
     #np.random.rand()的值在[0,1]之间
     #自定义的rand函数：随机生成(a,b)之间的一个值
 
-    def get_random_data(self,every_line,input_shape,ratio1=0.3,hue=0.1,sat=1.5,val=1.5,random=True):
-        img_path=every_line.split()
-        image=Image.open(img_path[0])
-        image_w,image_h=image.size  #PIL打开格式是W，H
-        input_h,input_w=input_shape
-        box=np.array([np.array(list(map(int,box.split(",")))) for box in img_path[1:]])
-        #返回的是[n,5]的二位数组
+    # def get_random_data(self,every_line,input_shape,ratio1=0.3,hue=0.1,sat=1.5,val=1.5,random=True):
+    #     img_path=every_line.split()
+    #     image=Image.open(img_path[0])
+    #     image_w,image_h=image.size  #PIL打开格式是W，H
+    #     input_h,input_w=input_shape
+    #     box=np.array([np.array(list(map(int,box.split(",")))) for box in img_path[1:]])
+    #     #返回的是[n,5]的二位数组
+    #
+    #
+    #     if not random:#(不随机的话)将图片进行加灰边的resize
+    #         scale=min(input_w/image_w,input_h/image_h)#取最小比列
+    #         new_w=int(image_w*scale)
+    #         new_h=int(image_h*scale)
+    #         dx=(input_w-new_w)//2  #获得灰边的距离
+    #         dy=(input_h-new_h)//2
+    #
+    #         image=image.resize((new_w,new_h),Image.BICUBIC)
+    #         new_image=Image.new("RGB",(input_w,input_h),(128,128,128))
+    #         new_image.paste(image,(dx,dy))
+    #         image_array=np.array(new_image,np.float32)
+    #
+    #         # 调整目标框坐标(将目标框resize到等比缩放的图片中)
+    #         new_box=np.zeros((len(box),5))
+    #         if len(box)>0:
+    #             np.random.shuffle(box)
+    #             box[:,[0,2]]=box[:,[0,2]]*(new_w/input_w)+dx
+    #             box[:,[1,3]]=box[:,[1,3]]*(new_h/input_h)+dy
+    #             box[:,0:2][box[:,0:2]<0]=0
+    #             box[:,2][box[:,2]>input_w]=input_w
+    #             box[:,3][box[:,3]>input_h]=input_h
+    #             box_w=box[:,2]-box[:,0]
+    #             box_h=box[:,3]-box[:,1]
+    #             box=box[np.logical_and(box_w>1,box_h>1)]#保留有效框
+    #             new_box=np.zeros((len(box),5))
+    #             new_box[:len(box)]=box
+    #
+    #         return image_array,new_box
+    #
+    #     if random:
+    #         # 调整图片大小  ratio1=0.3 在input_w=input_h的情况下new_ar=[0.53,1.85]
+    #         new_ratio=input_w/input_h*self.rand(1-ratio1,1+ratio1)/self.rand(1-ratio1,1+ratio1)
+    #         scale=self.rand(0.25,2)
+    #         if new_ratio <1:
+    #             new_h=int(scale*input_h)
+    #             new_w=int(new_h*new_ratio)
+    #         else:
+    #             new_w=int(scale*input_w)
+    #             new_h=int(new_w/new_ratio)
+    #         image=image.resize((new_w,new_h),Image.BICUBIC)
+    #
+    #         dx=int(self.rand(0,input_w-new_w))
+    #         dy=int(self.rand(0,input_h-new_h))
+    #         new_image=Image.new("RGB",(input_w,input_h),
+    #             (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)))
+    #         new_image.paste(image,(dx,dy))
+    #         image=new_image#随机缩放粘贴，背景颜色随机
+    #
+    #         #随机左右翻转0.5的概率
+    #         flip=self.rand()<.5
+    #         if flip:
+    #             image=image.transpose(Image.FLIP_LEFT_RIGHT)
+    #
+    #         # 色域变换hue=.1, sat=1.5, val=1.5
+    #         hue=self.rand(-hue,hue)
+    #         sat=self.rand(1,sat) if self.rand()<.5 else 1/self.rand(1,sat)
+    #         val=self.rand(1,val) if self.rand()<.5 else 1/self.rand(1,val)
+    #         x=cv2.cvtColor(np.array(image,np.float32)/255,cv2.COLOR_RGB2HSV)
+    #         x[...,0]+=hue*360
+    #         x[...,0][x[...,0]>1]-=1
+    #         x[...,0][x[...,0]<0]+=1    #色调H：用角度度量，取值范围为0°～360°
+    #         x[...,1]*=sat              #饱和度S：取值范围为0.0～1.0；
+    #         x[...,2]*=val              #亮度V：取值范围为0.0(黑色)～1.0(白色)
+    #         x[x[...,0]>360,0]=360
+    #         x[...,1:][x[...,1:]>1]=1
+    #         x[x<0]=0
+    #         img_array=cv2.cvtColor(x,cv2.COLOR_HSV2RGB)*255
+    #
+    #         # 调整目标框坐标
+    #         new_box=np.zeros((len(box),5))
+    #         if len(box)>0:
+    #             np.random.shuffle(box)
+    #             box[:,[0,2]]=box[:,[0,2]]*(new_w/image_w)+dx
+    #             box[:,[1,3]]=box[:,[1,3]]*(new_h/image_h)+dy
+    #             if flip:
+    #                 box[:, [0, 2]] = input_w - box[:, [2, 0]]
+    #                 # for _box in box:  # 镜像图片时，将左右手标签互换
+    #                 #     if _box[4] == 3:
+    #                 #         _box[4] = 4
+    #                 #     elif _box[4] == 4:
+    #                 #         _box[4] = 3
+    #
+    #             box[:,0:2][box[:,0:2]<0]=0
+    #             box[:, 2][box[:, 2] > input_w] = input_w
+    #             box[:, 3][box[:, 3] > input_h] = input_h
+    #             box_w=box[:,2]-box[:,0]
+    #             box_h=box[:,3]-box[:,1]
+    #             box=box[np.logical_and(box_w>1,box_h>1)]
+    #             new_box=np.zeros((len(box),5))
+    #             new_box[:len(box)]=box
+    #
+    #         return img_array,new_box
+    def get_random_data(self, annotation_line, input_shape, jitter=.3, hue=.1, sat=1.5, val=1.5, random=True):
+        """实时数据增强的随机预处理"""
+        line = annotation_line.split()
+        image = Image.open(line[0])
+        iw, ih = image.size
+        h, w = input_shape
+        box = np.array([np.array(list(map(int, box.split(',')))) for box in line[1:]])
 
+        if not random:
+            scale = min(w/iw, h/ih)
+            nw = int(iw*scale)
+            nh = int(ih*scale)
+            dx = (w-nw)//2
+            dy = (h-nh)//2
 
-        if not random:#(不随机的话)将图片进行加灰边的resize
-            scale=min(input_w/image_w,input_h/image_h)#取最小比列
-            new_w=int(image_w*scale)
-            new_h=int(image_h*scale)
-            dx=(input_w-new_w)//2  #获得灰边的距离
-            dy=(input_h-new_h)//2
-
-            image=image.resize((new_w,new_h),Image.BICUBIC)
-            new_image=Image.new("RGB",(input_w,input_h),(128,128,128))
-            new_image.paste(image,(dx,dy))
-            image_array=np.array(new_image,np.float32)
-
-            # 调整目标框坐标(将目标框resize到等比缩放的图片中)
-            new_box=np.zeros((len(box),5))
-            if len(box)>0:
-                np.random.shuffle(box)
-                box[:,[0,2]]=box[:,[0,2]]*(new_w/input_w)+dx
-                box[:,[1,3]]=box[:,[1,3]]*(new_h/input_h)+dy
-                box[:,0:2][box[:,0:2]<0]=0
-                box[:,2][box[:,2]>input_w]=input_w
-                box[:,3][box[:,3]>input_h]=input_h
-                box_w=box[:,2]-box[:,0]
-                box_h=box[:,3]-box[:,1]
-                box=box[np.logical_and(box_w>1,box_h>1)]#保留有效框
-                # new_box=np.zeros(len(box),5)
-                # new_box[:,len(box)]=box
-                new_box=box
-            return image_array,new_box
-
-        if random:
-            # 调整图片大小  ratio1=0.3 在input_w=input_h的情况下new_ar=[0.53,1.85]
-            new_ratio=input_w/input_h*self.rand(1-ratio1,1+ratio1)/self.rand(1-ratio1,1+ratio1)
-            scale=self.rand(0.25,2)
-            if new_ratio <1:
-                new_h=int(scale*input_h)
-                new_w=int(new_h*new_ratio)
-            else:
-                new_w=int(scale*input_w)
-                new_h=int(new_w/new_ratio)
-            image=image.resize((new_w,new_h),Image.BICUBIC)
-
-            dx=int(self.rand(0,input_w-new_w))
-            dy=int(self.rand(0,input_h-new_h))
-            new_image=Image.new("RGB",(input_w,input_h),
-                (np.random.randint(0,255),np.random.randint(0,255),np.random.randint(0,255)))
-            new_image.paste(image,(dx,dy))
-            image=new_image#随机缩放粘贴，背景颜色随机
-
-            #随机左右翻转0.5的概率
-            flip=self.rand()<.5
-            if flip:
-                image=image.transpose(Image.FLIP_LEFT_RIGHT)
-
-            # 色域变换hue=.1, sat=1.5, val=1.5
-            hue=self.rand(-hue,hue)
-            sat=self.rand(1,sat) if self.rand()<.5 else 1/self.rand(1,sat)
-            val=self.rand(1,val) if self.rand()<.5 else 1/self.rand(1,val)
-            x=cv2.cvtColor(np.array(image,np.float32)/255,cv2.COLOR_RGB2HSV)
-            x[...,0]+=hue*360
-            x[...,0][x[...,0]>1]-=1
-            x[...,0][x[...,0]<0]+=1    #色调H：用角度度量，取值范围为0°～360°
-            x[...,1]*=sat              #饱和度S：取值范围为0.0～1.0；
-            x[...,2]*=val              #亮度V：取值范围为0.0(黑色)～1.0(白色)
-            x[x[...,0]>360,0]=360
-            x[...,1:][x[...,1:]>1]=1
-            x[x<0]=0
-            img_array=cv2.cvtColor(x,cv2.COLOR_HSV2RGB)*255
+            image = image.resize((nw,nh), Image.BICUBIC)
+            new_image = Image.new('RGB', (w,h), (128,128,128))
+            new_image.paste(image, (dx, dy))
+            image_data = np.array(new_image, np.float32)
 
             # 调整目标框坐标
-            new_box=np.zeros((len(box),5))
-            if len(box)>0:
+            box_data = np.zeros((len(box), 5))
+            if len(box) > 0:
                 np.random.shuffle(box)
-                box[:,[0,2]]=box[:,[0,2]]*(new_w/image_w)+dx
-                box[:,[1,3]]=box[:,[1,3]]*(new_h/image_h)+dy
-                if flip:
-                    box[:, [0, 2]] = input_w - box[:, [2, 0]]
-                    for _box in box:  # 镜像图片时，将左右手标签互换
-                        if _box[4] == 3:
-                            _box[4] = 4
-                        elif _box[4] == 4:
-                            _box[4] = 3
+                box[:, [0, 2]] = box[:, [0, 2]] * nw / iw + dx
+                box[:, [1, 3]] = box[:, [1, 3]] * nh / ih + dy
+                box[:, 0:2][box[:, 0:2] < 0] = 0
+                box[:, 2][box[:, 2] > w] = w
+                box[:, 3][box[:, 3] > h] = h
+                box_w = box[:, 2] - box[:, 0]
+                box_h = box[:, 3] - box[:, 1]
+                box = box[np.logical_and(box_w > 1, box_h > 1)]  # 保留有效框
+                box_data = np.zeros((len(box), 5))
+                box_data[:len(box)] = box
 
-                box[:,0:2][box[:,0:2]<0]=0
-                box[:, 2][box[:, 2] > input_w] = input_w
-                box[:, 3][box[:, 3] > input_h] = input_h
-                box_w=box[:,2]-box[:,0]
-                box_h=box[:,3]-box[:,1]
-                box=box[np.logical_and(box_w>1,box_h>1)]
-                # new_box=np.zeros((len(box),5))
-                # new_box[:len(box)]=box
-                new_box=box
-            return img_array,new_box
+            return image_data, box_data
 
-    def get_random_data_mosaic(self,every_line,input_shape,ratio1=0.3,hue=0.1,sat=1.5,val=1.5):
+        # 调整图片大小
+        new_ar = w / h * self.rand(1 - jitter, 1 + jitter) / self.rand(1 - jitter, 1 + jitter)
+        #作者缩放尺度大对先验框有没有影响，缩放尺度太小的化会不会泛化性不强？
+        scale = self.rand(.25, 2)
+        if new_ar < 1:
+            nh = int(scale * h)
+            nw = int(nh * new_ar)
+        else:
+            nw = int(scale * w)
+            nh = int(nw / new_ar)
+        image = image.resize((nw, nh), Image.BICUBIC)
+
+        # 放置图片
+        dx = int(self.rand(0, w - nw))
+        dy = int(self.rand(0, h - nh))
+        new_image = Image.new('RGB', (w, h),
+                              (np.random.randint(0, 255), np.random.randint(0, 255), np.random.randint(0, 255)))
+        new_image.paste(image, (dx, dy))
+        image = new_image
+
+        # 是否翻转图片
+        flip = self.rand() < .5
+        if flip:
+            image = image.transpose(Image.FLIP_LEFT_RIGHT)
+
+        # 色域变换hue=.1, sat=1.5, val=1.5
+        # 增加灰度图出现的几率，夜间场景红外摄像头是灰度
+        gray=self.rand() < .5
+        x=np.array(image,np.uint8)
+        if gray:
+            x=cv2.cvtColor(x, cv2.COLOR_RGB2GRAY)
+            x= cv2.cvtColor(x, cv2.COLOR_GRAY2RGB)
+
+        hue = self.rand(-hue, hue)
+        sat = self.rand(1, sat) if self.rand() < .5 else 1 / self.rand(1, sat)
+        val = self.rand(1, val) if self.rand() < .5 else 1 / self.rand(1, val)
+        x = cv2.cvtColor(x.astype(np.float32)/255, cv2.COLOR_RGB2HSV)
+        x[..., 0] += hue*360
+        x[..., 0][x[..., 0]>1] -= 1
+        x[..., 0][x[..., 0]<0] += 1
+        x[..., 1] *= sat
+        x[..., 2] *= val
+        x[x[:,:, 0]>360, 0] = 360
+        x[:, :, 1:][x[:, :, 1:]>1] = 1
+        x[x<0] = 0
+        image_data = cv2.cvtColor(x, cv2.COLOR_HSV2RGB)*255
+
+        # 调整目标框坐标
+        box_data = np.zeros((len(box), 5))
+        if len(box) > 0:
+            np.random.shuffle(box)
+            box[:, [0, 2]] = box[:, [0, 2]] * nw / iw + dx
+            box[:, [1, 3]] = box[:, [1, 3]] * nh / ih + dy
+            if flip:
+                box[:, [0, 2]] = w - box[:, [2, 0]]
+                #左右手标签互换
+                # for _box in box:
+                #     if _box[4] == 3:
+                #         _box[4] = 4
+                #     elif _box[4] == 4:
+                #         _box[4] = 3
+
+            box[:, 0:2][box[:, 0:2] < 0] = 0
+            box[:, 2][box[:, 2] > w] = w
+            box[:, 3][box[:, 3] > h] = h
+            box_w = box[:, 2] - box[:, 0]
+            box_h = box[:, 3] - box[:, 1]
+            box = box[np.logical_and(box_w > 1, box_h > 1)]  # 保留有效框
+            box_data = np.zeros((len(box), 5))
+            box_data[:len(box)] = box
+
+        return image_data, box_data
+
+    def get_random_data_mosaic(self,every_line,input_shape,hue=0.1,sat=1.5,val=1.5):
         input_h,input_w=input_shape
         min_offset_x=0.3
         min_offset_y=0.3
@@ -149,11 +257,11 @@ class Yolodataset(Dataset):
                 image=image.transpose(Image.FLIP_LEFT_RIGHT)
                 box[:,[0,2]]=image_w-box[:,[2,0]]
                 # 左右手标签互换互换
-                for _box in box:
-                    if _box[4] == 3:
-                        _box[4] = 4
-                    elif _box[4] == 4:
-                        _box[4] = 3
+                # for _box in box:
+                #     if _box[4] == 3:
+                #         _box[4] = 4
+                #     elif _box[4] == 4:
+                #         _box[4] = 3
 
             new_ratio=input_w/input_h
             scale =self.rand(scale_low,scale_high)

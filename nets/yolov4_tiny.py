@@ -67,7 +67,7 @@ class Yolobody(nn.Module):
         return out13,out26 #[N,30,13,13],[N,30,26,26]
 
 if __name__ == '__main__':
-    a=torch.ones(50,3,416,416)
+    a=torch.ones(50,3,224,224)
     you=Yolobody(3,4,2)
     q,w=you(a)
     print(q.shape)

@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 
-classes=["脸","眼","嘴","手"]
+# classes=["脸","眼","嘴","手"]
+classes={"脸":0,"眼":1,"嘴":2,"左手":3,"右手":3,"hand":3}
 data_path=r"E:\666666\data\7-6\data.7.9"
 def add_xywhcls(year,name,cls_2021):
     xml=open(data_path+f"/VOC{year}/Annotations/{name}.xml",encoding="UTF-8")#读取xml加上UTF-8，不然读取会出错
@@ -12,7 +13,7 @@ def add_xywhcls(year,name,cls_2021):
         cls1 =obj.find("name").text
         if cls1 not in classes:
             continue
-        cls1_id=classes.index(cls1)
+        cls1_id=classes[cls1]
         xmlbox=obj.find("bndbox")
         b=[int(xmlbox.find("xmin").text),int(xmlbox.find("ymin").text),
            int(xmlbox.find("xmax").text),int(xmlbox.find("ymax").text)]

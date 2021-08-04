@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # 运行该程序会计算"\VOC2021\Annotation"的xml
     # 会生成yolo_anchors.txt
     path=r"E:\666666\data\7-6\data.7.9"
-    size=416
+    size=224
     anchors_num=6
     xml_path=path+r"\VOC2007\Annotations"
     #取出所有xml中的所有框

@@ -345,6 +345,12 @@ def clip_by_tensor(t,t_min,t_max):#将sigmoid之后的值限制在[t_min-7,t_max
 def smooth_labels(target_cls,smooth_label,num_classes):#target_cls[mask==1],self.smooth_label,self.num_classes
     return target_cls*(1.0-smooth_label)+smooth_label/num_classes
 
+
+
+
+
+
+######################################################################################################################
 # a=torch.zeros(5,4)
 # print(a.size)
 # print(a.size())
